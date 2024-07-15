@@ -1,0 +1,60 @@
+version: "3"
+services:
+  mongodb:
+    image: mongo:4.4
+    container_name: mongo
+    hostname: mongodb-lts2021
+    volumes:
+      - mongo-config:/data/configdb
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_DATABAS=nuxeo
+      - MONGO_INITDB_USERNAME=nuxeo
+      - MONGO_INITDB_PASSWORD=nuxeo
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.9.3
+    container_name: elasticsearch
+    hostname: elasticsearch-lts2021
+    ports:
+      - 9200:9200
+    environment:
+      - "discovery.type=single-node"
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "ES_JAVA_OPTS=-Xms384m -Xmx384m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+  nuxeo:
+    image: docker-private.packages.nuxeo.com/nuxeo/nuxeo:2021
+    container_name: nuxeo
+    hostname: nuxeo
+    ports:
+      - 8080:8080
+    environment:
+      NUXEO_CLID: GET-CLID-FROM-NUXEO
+      NUXEO_PACKAGES: nuxeo-web-ui
+    depends_on:
+      - elasticsearch
+      - mongodb
+    volumes:
+      - ./nuxeo/conf/mongo-elastic.conf:/etc/nuxeo/conf.d/mongo-elastic.conf
+      - nuxeo-data:/var/lib/nuxeo/data
+      - nuxeo-logs:/var/log/nuxeo
+      - nuxeo-tmp:/tmp
+      - nuxeo-lib:/var/lib/nuxeo
+
+volumes:
+    nuxeo-data:
+    nuxeo-logs:
+    nuxeo-tmp:
+    nuxeo-lib:
+    elasticsearch-data:
+    mongo-config:
+    mongo-data:
+# Set a MTU so Nuxeo can reach connect server even with a damn VPN
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
