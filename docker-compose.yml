@@ -4,6 +4,8 @@ services:
     image: mongo:4.4
     container_name: mongo
     hostname: mongodb-lts2021
+    ports:
+      - 27017:27017
     volumes:
       - mongo-config:/data/configdb
       - mongo-data:/data/db
